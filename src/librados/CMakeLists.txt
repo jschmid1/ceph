@@ -4,8 +4,7 @@ add_library(librados_objs OBJECT
   RadosClient.cc)
 add_library(librados ${CEPH_SHARED}
   librados.cc
-  $<TARGET_OBJECTS:librados_objs>
-  $<TARGET_OBJECTS:common_buffer_obj>)
+  $<TARGET_OBJECTS:librados_objs>)
 add_dependencies(librados osdc)
 if(WITH_LTTNG)
   add_dependencies(librados rados-tp)
@@ -21,7 +20,6 @@ if(ENABLE_SHARED)
     # use COMPILE_FLAGS for the backward compatibility with cmake 2.8.11, should have been:
     #  CXX_VISIBILITY_PRESET hidden
     #  VISIBILITY_INLINES_HIDDEN ON
-    COMPILE_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden"
-    LINK_FLAGS "-Wl,--exclude-libs,ALL")
+    COMPILE_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
 endif(ENABLE_SHARED)
 install(TARGETS librados DESTINATION ${CMAKE_INSTALL_LIBDIR})
