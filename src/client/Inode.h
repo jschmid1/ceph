@@ -53,6 +53,7 @@ struct CapSnap {
   uint64_t size;
   utime_t ctime, btime, mtime, atime;
   version_t time_warp_seq;
+  uint64_t change_attr;
   uint32_t   mode;
   uid_t      uid;
   gid_t      gid;
@@ -111,6 +112,7 @@ struct Inode {
   utime_t    mtime;   // file data modify time.
   utime_t    atime;   // file data access time.
   uint32_t   time_warp_seq;  // count of (potential) mtime/atime timewarps (i.e., utimes())
+  uint64_t   change_attr;
 
   uint64_t max_size;  // max size we can write to
 
