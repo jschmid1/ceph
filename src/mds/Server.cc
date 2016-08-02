@@ -3835,6 +3835,7 @@ void Server::handle_client_setattr(MDRequestRef& mdr)
 
   pi->version = cur->pre_dirty();
   pi->ctime = mdr->get_op_stamp();
+  pi->change_attr++;
 
   // log + wait
   le->metablob.add_client_req(req->get_reqid(), req->get_oldest_client_tid());
@@ -3869,6 +3870,7 @@ void Server::do_open_truncate(MDRequestRef& mdr, int cmode)
   inode_t *pi = in->project_inode();
   pi->version = in->pre_dirty();
   pi->mtime = pi->ctime = mdr->get_op_stamp();
+  pi->change_attr++;
 
   uint64_t old_size = MAX(pi->size, mdr->client_request->head.args.open.old_size);
   if (old_size > 0) {
