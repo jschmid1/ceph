@@ -403,10 +403,26 @@ int main(int argc, const char **argv)
 
       fe = new RGWFCGXFrontend(fcgi_pe, config);
     } else if (framework == "civetweb" || framework == "mongoose") {
-      int port;
-      config->get_val("port", 80, &port);
+      string port;
+      int portno;
+      char *portend;
+      config->get_val("port", "80", &port);
+      const char *portstart = port.c_str();
+      portno = strtol(portstart, &portend, 10);
+      if (portstart == portend) {
+	derr << "ERROR: cannot parse port " << port << dendl;
+	return -1;
+      }
+      if (*portend && (*portend != 's' || portend[1])) {
+	derr << "ERROR: trailing stuff on port " << port << dendl;
+	return -1;
+      }
+      if (portno <= 0 || portno > 65535) {
+	derr << "ERROR: port out of range " << port << dendl;
+	return -1;
+      }
 
-      RGWProcessEnv env = { store, &rest, olog, port };
+      RGWProcessEnv env = { store, &rest, olog, portno };
 
       fe = new RGWMongooseFrontend(env, config);
     } else if (framework == "loadgen") {
