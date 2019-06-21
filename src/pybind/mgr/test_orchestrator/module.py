@@ -4,12 +4,17 @@ import os
 import threading
 import functools
 import uuid
+import sys
 from subprocess import check_output, CalledProcessError
 
 from mgr_module import MgrModule
 
+
 import orchestrator
 
+# TODO make this generic
+sys.path.append('/home/jxs/projects/ceph/src/')
+from python.ceph import osd as osd_util
 
 
 
@@ -213,6 +218,17 @@ class TestOrchestrator(MgrModule, orchestrator.Orchestrator):
     @deferred_write("remove_osds")
     def remove_osds(self, osd_ids):
         assert isinstance(osd_ids, list)
+        rett = list()
+        rett.append(osd_util.mark_osd('out', osd_ids))
+        rett.append(osd_util.osd_empty(osd_ids))
+        rett.append(osd_util.purge_osd(osd_ids))
+        # FIXME: This needs to be seriallized when osd_ids is a list
+        self.service_action("stop", f"ceph-osd@{osd_ids[0]}")
+        try:
+            rett.append(check_output(['ceph-volume', 'lvm', 'zap', '--osd-id', f'{osd_ids}']))
+        except:
+            rett.append('ceph-volume call failed')
+        return rett
 
     @deferred_write("service_action")
     def service_action(self, action, service_type, service_name=None, service_id=None):
