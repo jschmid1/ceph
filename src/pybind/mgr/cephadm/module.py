@@ -126,7 +126,7 @@ def assert_valid_host(name):
         raise OrchestratorError(e)
 
 
-class SpecStore():
+class SpecStore(object):
     def __init__(self, mgr):
         # type: (CephadmOrchestrator) -> None
         self.mgr = mgr
@@ -135,7 +135,9 @@ class SpecStore():
     def load(self):
         # type: () -> None
         for k, v in six.iteritems(self.mgr.get_store_prefix(SPEC_STORE_PREFIX)):
+            self.mgr.log.debug(f"Loading specs from store: key -> {k}, value -> {v}")
             service_name = k[len(SPEC_STORE_PREFIX):]
+            self.mgr.log.debug(f"Servicename -> {service_name}")
             try:
                 spec = ServiceSpec.from_json(json.loads(v))
                 self.specs[service_name] = spec
@@ -2800,11 +2802,11 @@ receivers:
         """
         Loads all entries from the service_spec mon_store root.
         """
-        specs = list()
-        for service_name, spec in self.spec_store.specs.items():
-            specs.append('---')
-            specs.append(yaml.dump(spec))
-        return trivial_result(specs)
+        self.log.debug(f"STORE ITEMS are: {self.spec_store.specs}")
+        specs = [v.to_json() for k, v in self.spec_store.specs.items()]
+        self.log.debug(f"specs are: {specs}")
+        yaml_specs = yaml.dump_all(specs, explicit_start=True, indent=4, line_break=True)
+        return trivial_result(yaml_specs)
 
     def apply_service_config(self, spec_document: str) -> orchestrator.Completion:
         """

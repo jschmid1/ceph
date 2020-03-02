@@ -1536,15 +1536,16 @@ class ServiceSpec(object):
     """
 
     def __init__(self,
-                 service_type : str,
-                 service_id : Optional[str] = None,
-                 placement : Optional[PlacementSpec] = None,
-                 count : Optional[int] = None):
+                 service_type: str = None,
+                 service_id: Optional[str] = None,
+                 placement: Optional[PlacementSpec] = None,
+                 count: Optional[int] = None):
         self.placement = PlacementSpec() if placement is None else placement  # type: PlacementSpec
 
         assert service_type
         self.service_type = service_type
         self.service_id = service_id
+        servicespec_validate_add(self)
 
         if self.placement is not None and self.placement.count is not None:
             #: Count of service instances. Deprecated.
@@ -1569,6 +1570,7 @@ class ServiceSpec(object):
             _cls = ServiceSpec  # type: ignore
         for k, v in json_spec.items():
             if k == 'placement':
+                logger.debug(f"Loading placement spec from dict -> {v}")
                 v = PlacementSpec.from_dict(v)
             if k == 'spec':
                 args.update(v)
@@ -1596,7 +1598,8 @@ def servicespec_validate_add(self: ServiceSpec):
     if not self.service_type:
         raise OrchestratorValidationError('Cannot add Service: type required')
     if self.service_type in ['mds', 'rgw', 'nfs'] and not self.service_id:
-        raise OrchestratorValidationError('Cannot add Service: id required')
+        raise OrchestratorValidationError(
+            f"Cannot add Service: <service_id> field required for service type: <{self.service_type}>")
 
 
 def servicespec_validate_hosts_have_network_spec(self: ServiceSpec):
@@ -1615,10 +1618,15 @@ def servicespec_validate_hosts_have_network_spec(self: ServiceSpec):
 
 
 class NFSServiceSpec(ServiceSpec):
-    def __init__(self, service_id, pool=None, namespace=None, placement=None,
-                 service_type='nfs'):
+    def __init__(self,
+                 service_id,
+                 pool=None,
+                 namespace=None,
+                 placement=None,
+                 service_type='nfs',
+                 count=None):
         assert service_type == 'nfs'
-        super(NFSServiceSpec, self).__init__('nfs', service_id=service_id, placement=placement)
+        super(NFSServiceSpec, self).__init__(service_type='nfs', service_id=service_id, placement=placement, count=count)
 
         #: RADOS pool where NFS client recovery data is stored.
         self.pool = pool
@@ -1632,6 +1640,7 @@ class NFSServiceSpec(ServiceSpec):
         if not self.pool:
             raise OrchestratorValidationError('Cannot add NFS: No Pool specified')
 
+
 class RGWSpec(ServiceSpec):
     """
     Settings to configure a (multisite) Ceph RGW
@@ -1641,16 +1650,28 @@ class RGWSpec(ServiceSpec):
                  rgw_realm,  # type: str
                  rgw_zone,  # type: str
                  placement=None,
+                 count=None,  # type: Optional[int]
                  service_type='rgw',
+                 service_id=None,  # type: Optional[str]
                  rgw_frontend_port=None,  # type: Optional[int]
                  ):
         assert service_type == 'rgw'
-        super(RGWSpec, self).__init__('rgw', service_id=rgw_realm+'.'+rgw_zone, placement=placement)
 
         self.rgw_realm = rgw_realm
         self.rgw_zone = rgw_zone
         self.rgw_frontend_port = rgw_frontend_port
 
+        self.service_id = service_id
+
+        super(RGWSpec, self).__init__(service_type=service_type,
+                                      service_id=self.get_service_id(),
+                                      placement=placement,
+                                      count=count)
+
+    def get_service_id(self):
+        if self.service_id:
+            return self.service_id
+        return self.rgw_realm + "." + self.rgw_zone
 
 
 class InventoryFilter(object):
