@@ -59,7 +59,7 @@ class OrchestratorValidationError(OrchestratorError):
     """
 
 
-def handle_exception(prefix, cmd_args, desc, perm, func):
+def handle_exception(prefix, cmd_args, desc, perm, func, alias=None):
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -74,15 +74,15 @@ def handle_exception(prefix, cmd_args, desc, perm, func):
     # misuse partial to copy `wrapper`
     wrapper_copy = lambda *l_args, **l_kwargs: wrapper(*l_args, **l_kwargs)
     wrapper_copy._prefix = prefix  # type: ignore
-    wrapper_copy._cli_command = CLICommand(prefix, cmd_args, desc, perm)  # type: ignore
+    wrapper_copy._cli_command = CLICommand(prefix, cmd_args, desc, perm, alias=alias)  # type: ignore
     wrapper_copy._cli_command.func = wrapper_copy  # type: ignore
 
     return wrapper_copy
 
 
 def _cli_command(perm):
-    def inner_cli_command(prefix, cmd_args="", desc=""):
-        return lambda func: handle_exception(prefix, cmd_args, desc, perm, func)
+    def inner_cli_command(prefix, cmd_args="", desc="", alias=None):
+        return lambda func: handle_exception(prefix, cmd_args, desc, perm, func, alias=alias)
     return inner_cli_command
 
 

@@ -271,13 +271,14 @@ class CRUSHMap(ceph_module.BasePyCRUSH):
 class CLICommand(object):
     COMMANDS = {}  # type: Dict[str, CLICommand]
 
-    def __init__(self, prefix, args="", desc="", perm="rw"):
+    def __init__(self, prefix, args="", desc="", perm="rw", alias=""):
         self.prefix = prefix
         self.args = args
         self.args_dict = {}
         self.desc = desc
         self.perm = perm
         self.func = None  # type: Optional[Callable]
+        self.alias = alias
         self._parse_args()
 
     def _parse_args(self):
@@ -297,6 +298,8 @@ class CLICommand(object):
     def __call__(self, func):
         self.func = func
         self.COMMANDS[self.prefix] = self
+        if self.alias:
+            self.COMMANDS[self.alias] = self
         return self.func
 
     def call(self, mgr, cmd_dict, inbuf):
@@ -311,6 +314,7 @@ class CLICommand(object):
         return self.func(mgr, **kwargs)
 
     def dump_cmd(self):
+        # TODO: register alias
         return {
             'cmd': '{} {}'.format(self.prefix, self.args),
             'desc': self.desc,

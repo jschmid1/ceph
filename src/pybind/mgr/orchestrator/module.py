@@ -319,16 +319,7 @@ class OrchestratorCli(OrchestratorClientMixin, MgrModule):
         raise_if_exception(completion)
         return HandleCommandResult(stdout=completion.result_str())
 
-    @_cli_read_command(
-        'orch ls',
-        "name=service_type,type=CephString,req=false "
-        "name=service_name,type=CephString,req=false "
-        "name=export,type=CephBool,req=false "
-        "name=format,type=CephChoices,strings=plain|json|json-pretty|yaml,req=false "
-        "name=refresh,type=CephBool,req=false",
-        'List services known to orchestrator')
-    def _list_services(self, host=None, service_type=None, service_name=None, export=False, format='plain', refresh=False):
-
+    def list_services(self, host, service_type, service_name, export, format, refresh):
         if export and format == 'plain':
             format = 'yaml'
 
@@ -359,7 +350,7 @@ class OrchestratorCli(OrchestratorClientMixin, MgrModule):
                 ['NAME', 'RUNNING', 'REFRESHED', 'AGE',
                  'PLACEMENT',
                  'IMAGE NAME', 'IMAGE ID',
-                ],
+                 ],
                 border=False)
             table.align['NAME'] = 'l'
             table.align['RUNNING'] = 'r'
@@ -388,6 +379,18 @@ class OrchestratorCli(OrchestratorClientMixin, MgrModule):
                 ))
 
             return HandleCommandResult(stdout=table.get_string())
+
+    @_cli_read_command(
+        'orch ls',
+        "name=service_type,type=CephString,req=false "
+        "name=service_name,type=CephString,req=false "
+        "name=export,type=CephBool,req=false "
+        "name=format,type=CephChoices,strings=plain|json|json-pretty|yaml,req=false "
+        "name=refresh,type=CephBool,req=false",
+        desc='List services known to orchestrator',
+        alias='orch spec ls')
+    def _list_services_foo(self, host=None, service_type=None, service_name=None, export=False, format='plain', refresh=False):
+        return self.list_services(host, service_type, service_name, export, format, refresh)
 
     @_cli_read_command(
         'orch ps',
