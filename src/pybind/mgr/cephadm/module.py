@@ -2010,6 +2010,7 @@ you may want to run:
                 'crash': PlacementSpec(host_pattern='*'),
             }
             spec.placement = defaults[spec.service_type]
+        # TODO: This should go to the HostAssignment.validate()
         elif spec.service_type in ['mon', 'mgr'] and \
              spec.placement.count is not None and \
              spec.placement.count < 1:

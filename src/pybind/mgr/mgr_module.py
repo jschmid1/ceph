@@ -321,9 +321,23 @@ class CLICommand(object):
             'perm': self.perm
         }
 
+    def dump_alias(self):
+        if self.alias:
+            return {
+                'cmd': '{} {}'.format(self.alias, self.args),
+                'desc': self.desc,
+                'perm': self.perm
+            }
+        return {}
+
     @classmethod
     def dump_cmd_list(cls):
-        return [cmd.dump_cmd() for cmd in cls.COMMANDS.values()]
+        cmd_list = []
+        for cmd in cls.COMMANDS.values():
+            cmd.append(cmd.dump_cmd())
+            if cmd.dump_alias():
+                cmd.append(cmd.dump_alias())
+        return cmd_list
 
 
 def CLIReadCommand(prefix, args="", desc=""):

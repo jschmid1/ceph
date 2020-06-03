@@ -74,6 +74,7 @@ def handle_exception(prefix, cmd_args, desc, perm, func, alias=None):
     # misuse partial to copy `wrapper`
     wrapper_copy = lambda *l_args, **l_kwargs: wrapper(*l_args, **l_kwargs)
     wrapper_copy._prefix = prefix  # type: ignore
+    wrapper_copy._alias = alias  # type: ignore
     wrapper_copy._cli_command = CLICommand(prefix, cmd_args, desc, perm, alias=alias)  # type: ignore
     wrapper_copy._cli_command.func = wrapper_copy  # type: ignore
 
@@ -103,6 +104,8 @@ class CLICommandMeta(type):
         for v in dct.values():
             try:
                 dispatch[v._prefix] = v._cli_command
+                if v._alias:
+                    dispatch[v._alias] = v._cli_command
             except AttributeError:
                 pass
 
